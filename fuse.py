@@ -25,6 +25,7 @@ from stat import S_IFDIR
 from traceback import print_exc
 
 import logging
+import sys
 
 try:
     from functools import partial
@@ -41,10 +42,9 @@ except ImportError:
         newfunc.keywords = keywords
         return newfunc
 
-try:
-    basestring
-except NameError:
-    basestring = str
+if sys.version_info[0] < 3:
+    bytes = str
+    str = unicode
 
 class c_timespec(Structure):
     _fields_ = [('tv_sec', c_long), ('tv_nsec', c_long)]
@@ -535,7 +535,7 @@ class FUSE(object):
     def listxattr(self, path, namebuf, size):
         attrs = self.operations('listxattr', path) or ''
 
-        buf = create_string_buffer('\x00'.join(attrs))
+        buf = create_string_buffer(b'\x00'.join(attrs))
         bufsize = len(buf)
         if namebuf:
             if bufsize > size: return -ERANGE
@@ -557,7 +557,7 @@ class FUSE(object):
         # Ignore raw_fi
         for item in self.operations('readdir', path, fip.contents.fh):
 
-            if isinstance(item, basestring):
+            if isinstance(item, bytes) or isinstance(item, str):
                 name, st, offset = item, None, 0
             else:
                 name, attrs, offset = item
@@ -581,10 +581,10 @@ class FUSE(object):
         return self.operations('fsyncdir', path, datasync, fip.contents.fh)
 
     def init(self, conn):
-        return self.operations('init', '/')
+        return self.operations('init', b'/')
 
     def destroy(self, private_data):
-        return self.operations('destroy', '/')
+        return self.operations('destroy', b'/')
 
     def access(self, path, amode):
         return self.operations('access', path, amode)
@@ -699,7 +699,7 @@ class Operations(object):
            inside the directory, while Linux counts only the
            subdirectories."""
 
-        if path != '/':
+        if path != b'/':
             raise FuseOSError(ENOENT)
         return dict(st_mode=(S_IFDIR | 0755), st_nlink=2)
 
@@ -748,7 +748,7 @@ class Operations(object):
     def readdir(self, path, fh):
         """Can return either a list of names, or a list of
            (name, attrs, offset) tuples. attrs is a dict as in getattr."""
-        return ['.', '..']
+        return [b'.', b'..']
 
     def readlink(self, path):
         raise FuseOSError(ENOENT)

@@ -4,7 +4,7 @@ from __future__ import with_statement
 
 from errno import EACCES
 from os.path import realpath
-from sys import argv, exit
+from sys import argv, exit, getfilesystemencoding
 from threading import Lock
 
 import os
@@ -15,6 +15,8 @@ from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
 class Loopback(LoggingMixIn, Operations):
     def __init__(self, root):
         self.root = realpath(root)
+        if isinstance(self.root, unicode):
+            self.root = self.root.encode(getfilesystemencoding())
         self.rwlock = Lock()
 
     def __call__(self, op, path, *args):
@@ -57,7 +59,7 @@ class Loopback(LoggingMixIn, Operations):
             return os.read(fh, size)
 
     def readdir(self, path, fh):
-        return ['.', '..'] + os.listdir(path)
+        return [b'.', b'..'] + os.listdir(path)
 
     readlink = os.readlink
 

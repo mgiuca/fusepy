@@ -13,15 +13,15 @@ class Context(LoggingMixIn, Operations):
 
     def getattr(self, path, fh=None):
         uid, gid, pid = fuse_get_context()
-        if path == '/':
+        if path == b'/':
             st = dict(st_mode=(S_IFDIR | 0755), st_nlink=2)
-        elif path == '/uid':
+        elif path == b'/uid':
             size = len('%s\n' % uid)
             st = dict(st_mode=(S_IFREG | 0444), st_size=size)
-        elif path == '/gid':
+        elif path == b'/gid':
             size = len('%s\n' % gid)
             st = dict(st_mode=(S_IFREG | 0444), st_size=size)
-        elif path == '/pid':
+        elif path == b'/pid':
             size = len('%s\n' % pid)
             st = dict(st_mode=(S_IFREG | 0444), st_size=size)
         else:
@@ -33,17 +33,17 @@ class Context(LoggingMixIn, Operations):
         uid, gid, pid = fuse_get_context()
         encoded = lambda x: ('%s\n' % x).encode('utf-8')
 
-        if path == '/uid':
+        if path == b'/uid':
             return encoded(uid)
-        elif path == '/gid':
+        elif path == b'/gid':
             return encoded(gid)
-        elif path == '/pid':
+        elif path == b'/pid':
             return encoded(pid)
 
         raise RuntimeError('unexpected path: %r' % path)
 
     def readdir(self, path, fh):
-        return ['.', '..', 'uid', 'gid', 'pid']
+        return [b'.', b'..', b'uid', b'gid', b'pid']
 
     # Disable unused operations:
     access = None
