@@ -82,6 +82,24 @@ class TestMemory(FuseTest):
             f.close()
         self.assertEqual(os.listdir('.'), ['test.txt'])
 
+    def testCreateUnicodeFilename(self):
+        """Test creation of a Unicode filename."""
+        f = open(u'\u6d4b\u8bd5.txt', 'w')
+        try:
+            f.write('This is a test')
+        finally:
+            f.close()
+        self.assertEqual(os.listdir(u'.'), [u'\u6d4b\u8bd5.txt'])
+
+    def testCreateBinaryFilename(self):
+        """Test creation of a binary (non-utf-8) filename."""
+        f = open(b'd\xe9j\xe0_vu.txt', 'w')
+        try:
+            f.write('This is a test')
+        finally:
+            f.close()
+        self.assertEqual(os.listdir(b'.'), [b'd\xe9j\xe0_vu.txt'])
+
     def testRead(self):
         """Test read."""
         f = open('test.txt', 'w')
@@ -111,6 +129,20 @@ class TestMemory(FuseTest):
             self.assertEqual(f.read(), 'world')
             f.seek(8000)
             self.assertEqual(f.read(5), 'hello')
+        finally:
+            f.close()
+
+    def testReadWriteBinaryData(self):
+        """Test reading and writing binary file data."""
+        f = open(b'test.txt', 'wb')
+        binary = b',\xf2M\xba_\xb0\xa3\x0e&\xe8;*\xc5\xb9\xe2\x9e'
+        try:
+            f.write(binary)
+        finally:
+            f.close()
+        f = open('test.txt', 'rb')
+        try:
+            self.assertEqual(f.read(), binary)
         finally:
             f.close()
 
